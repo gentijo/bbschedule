@@ -60,7 +60,7 @@ class gameMatch:
     def setTeamA(self, team:[]):
         self.team_a=team
     
-    def setTeamB(self, team[]):
+    def setTeamB(self, team:[]):
         self.team_b = team
 
     def displayMatch(self):
@@ -106,9 +106,34 @@ class tournementBuilder:
             
             if (player in self.hasPlayedInRound): continue
 
-            team_a.append(player)
+            self.team_a.append(player)
             for team_a_idx in range(teamSize-1):
-                team_a.append(player.toPlayWith[team_a_idx])
+                self.team_a.append(player.toPlayWith[team_a_idx])
+
+    def calculateTeamB(self):
+        # calculate team b
+        for player in self.gamePlayers:
+            team_b = []
+
+            if (player in self.hasPlayedInRound): continue
+
+            if ((len(player.toPlayWith) < teamSize-1) and player not in team_a):
+                continue
+
+            team_b.append(player)
+            for team_b_idx in range(teamSize-1):
+                for player2 in player.toPlayAginst:
+                    if player2 in self.team_a:
+                        continue
+                    
+                    if (player2 in self.hasPlayedInRound):
+                        continue
+
+                    team_b.append(player2)
+
+            if len(team_b) == teamSize:
+                break
+            
      
     def buildRounds(self):
         self.hasPlayedInRound:[]
@@ -118,52 +143,31 @@ class tournementBuilder:
         for x in range(self.matchesPerRound):
             player:gamePlayer
 
+            self.calculateTeamA()
+            self.calculateTeamB()
 
-            # calculate team b
+            for player in self.team_a:
+                player.removeToPlayWith(self.team_a)
+                player.removeToPlayAgainst(self.team_b)
+                self.hasPlayedInRound.append(player)
+
+            for player in self.team_b
+                player.removeToPlayWith(self.team_b)
+                player.removeToPlayAgainst(self.team_a)
+                self.hasPlayedInRound.append(player)
+            
+            round = gameRound()
+            match = gameMatch()
+            match.setTeamA(self.team_a)
+            match.setTeamB(self.team_b)
+            round.addMatch(match)
+
+            self.gameRounds.addMatch(match)
+
             for player in self.gamePlayers:
-                team_b = []
-
-                if (player in hasPlayedInRound): continue
-
-                if ((len(player.toPlayWith) < teamSize-1) and player not in team_a):
+                if (player in self.gamePlayershasPlayedInRound):
                     continue
-
-                team_b.append(player)
-                for team_b_idx in range(teamSize-1):
-                    for player2 in player.toPlayAginst:
-                        if player2 in team_a:
-                            continue
-                        
-                        if (player2 in hasPlayedInRound):
-                            continue
-
-                        team_b.append(player2)
-
-                if len(team_b) == teamSize:
-                    break
-                
-                for player in team_a:
-                    player.removeToPlayWith(team_a)
-                    player.removeToPlayAgainst(team_b)
-                    hasPlayedInRound.append(player)
-
-                for player in team_b
-                    player.removeToPlayWith(team_b)
-                    player.removeToPlayAgainst(team_a)
-                    hasPlayedInRound.append(player)
-                
-                round = gameRound()
-                match = gameMatch()
-                match.setTeamA(team_a)
-                match.setTeamB(team_b)
-                round.addMatch(match)
-
-                self.gameRounds.addMatch(match)
-
-                for player in self.gamePlayers:
-                    if (player in hasPlayedInRound):
-                        continue
-                    round.addBuyPlayer(player)
+                round.addBuyPlayer(player)
 
                     
 
