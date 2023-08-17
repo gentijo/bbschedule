@@ -1,5 +1,9 @@
 from typing import List
 
+# Import required module
+import random
+import array
+
 #
 # TOURNEMENT
 #   ROUND (multiple)
@@ -50,12 +54,18 @@ class gamePlayer:
                 self.toPlayAginst[name]=player
 
     def removeToPlayWith(self, players:{'gamePlayer'}):
-        for player in players:
-            del self.toPlayWith[player.name]
+        for name in players:
+            try:
+                del self.toPlayWith[name]
+            except:
+                pass
             
     def removeToPlayAgainst(self, players:[]):
-        for player in players:
-            del self.toPlayAgainst[player.name]
+        for name in players:
+            try:
+                del self.toPlayAgainst[name]
+            except:
+                pass
 
 
 class gameMatch:
@@ -64,25 +74,30 @@ class gameMatch:
         self.team_b = team_b
 
         player:gamePlayer
-        for player in team_a:
+        for name in team_a:
+            player:gamePlayer = team_a[name]
+
             player.removeToPlayWith(team_a)
             player.removeToPlayAgainst(team_b)
-            round.hasPlayedInRound.append(player)
+            round.hasPlayedInRound[player.name] = player
 
-        for player in team_b:
+        for name in team_b:
+            player:gamePlayer = team_b[name]
+
             player.removeToPlayWith(team_b)
             player.removeToPlayAgainst(team_a)
-            round.hasPlayedInRound.append(player)
+            round.hasPlayedInRound[player.name] = player
 
 
-    def displayMatch(self):
-        print(",,'Team A'")
-        for player in self.team_a:
-            print(f"Player: {player}")
+    def display(self):
+        print("\tMatch")
+        print("\t\t'Team A'")
+        for name in self.team_a:
+            print(f"\t\t\tPlayer: {name}")
 
-        print(",,'Team B'")
-        for player in self.team_b:
-            print(f"Player: {player}")
+        print("\t\t'Team B'")
+        for name in self.team_b:
+            print(f"\t\t\tPlayer: {name}")
 
 class gameRound:
     def __init__(self):
@@ -96,8 +111,15 @@ class gameRound:
     def addBuyPlayer(self, player ):
         self.buyPlayers[player.name] = player
 
-    def displayRound(self):
-        pass
+    def display(self):
+        print("Round: \r\n")
+        for match in self.gameMatches:
+            match.display()
+
+        if (len(self.buyPlayers)):
+            print("\tBuy Round Players:")
+            for name in self.buyPlayers:
+                print(f"\t\t{name}")
 
 
 
@@ -132,7 +154,10 @@ class tournementBuilder:
 
         team:{gamePlayer} = {}
 
-        for name in self.gamePlayers:
+        names:[] = list(self.gamePlayers.keys())
+        random.shuffle(names)
+
+        for name in names:
             player:gamePlayer = self.gamePlayers[name]
             if (len(player.toPlayWith) < teamSize):
                 continue
@@ -156,17 +181,33 @@ class tournementBuilder:
 
         team:{gamePlayer} = {}
 
-        for name in self.gamePlayers:
+        names:[] = list(self.gamePlayers.keys())
+        random.shuffle(names)
+
+
+        for name in names:
+            
+            if len(team) >= teamSize:
+                break
+
             player:gamePlayer = self.gamePlayers[name]
 
             if (player.name in round.hasPlayedInRound): continue
 
-            if ((len(player.toPlayWith) < teamSize-1) and player.name not in team_a):
+            #
+            # If a player does not have enought ppl to play against
+            # or the player is currently listed in Team A, movr on
+            # to the next player.
+            #
+            if ((len(player.toPlayAginst) < teamSize-1) or player.name in team_a):
                 continue
 
             team[player.name] = player
 
             for team_b_idx in range(teamSize-1):
+                if len(team) >= teamSize:
+                    break
+
                 for name2 in player.toPlayAginst:
                     player2:gamePlayer = player.toPlayAginst[name2]
                     if player2.name in team_a:
@@ -187,10 +228,10 @@ class tournementBuilder:
     #
     #
     def buildRounds(self):   
+        numRounds:int = int(len(self.gamePlayers) / (teamSize*2))
 
-        for i in range(0, 5):
-            round = gameRound()
-            
+        for i in range(0, numRounds-1):
+            round = gameRound()     
             for x in range(self.matchesPerRound):
                 player:gamePlayer
 
@@ -200,15 +241,21 @@ class tournementBuilder:
                 match = gameMatch(round, team_a, team_b)
                 round.addMatch(match)
 
-            for player in self.gamePlayers:
-                if (player in self.gamePlayershasPlayedInRound):
+            for name in self.gamePlayers:
+                if (name in round.hasPlayedInRound):
                     continue
-                round.addBuyPlayer(player)
+                round.addBuyPlayer(self.gamePlayers[name])
 
-                    
+            self.gameRounds.append(round)         
 
+        print("\r\nRound Building complete")
 
+    def display(self):
+        print("\r\nTournement\r\n")
+        for round in self.gameRounds:
+            round.display()
 
 if __name__ == '__main__':
-    builder = tournementBuilder(allPlayerNames)
-    builder.buildRounds()
+    tournement = tournementBuilder(allPlayerNames)
+    tournement.buildRounds()
+    tournement.display()
